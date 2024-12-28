@@ -1,0 +1,32 @@
+# Logs
+*.log
+rsync.log
+backup.log
+
+# Backup Artifacts
+backup-home-config-*/
+backup-home-config-*.tar.gz
+
+# Temporary Files
+*.tmp
+*.bak
+*.swp
+*~
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# User Configuration (example configs only)
+config/backup-location.txt
+config/include-list.txt
+config/exclude-list.txt
+config/rsync-options.txt
+
+# Debugging Files
+debug.log
+
+# IDE and Editor Configs
+.vscode/
+.idea/
+*.code-workspace

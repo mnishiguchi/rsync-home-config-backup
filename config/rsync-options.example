@@ -1,0 +1,3 @@
+--no-compress
+--hard-links
+--max-size=100M
