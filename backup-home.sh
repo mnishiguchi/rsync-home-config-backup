@@ -1,13 +1,12 @@
 #!/bin/bash
 
 # ==============================================================#
-# Script: backup.sh
+# Script: backup-home.sh
 # Purpose:
-#   Perform an interactive backup of the user's home directory,
-#   focusing on preserving essential configuration files.
+#   Simplified home directory backup using rsync.
 #
 # Usage:
-#   ./backup.sh [-d] [-n]
+#   ./backup-home.sh [-d] [-n]
 #
 # Options:
 #   -d  Dry run: Preview the backup without making changes.
@@ -27,13 +26,13 @@ set -e # Exit on errors
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 CONFIG_DIR="${SCRIPT_DIR}/config"
 BACKUP_ROOT=$(<"${CONFIG_DIR}/backup-location.txt") # Root backup directory
-BACKUP_DIR="${BACKUP_ROOT}/backup-home-config-$(date +%Y%m%d)"
-BACKUP_ARCHIVE="${BACKUP_ROOT}/backup-home-config-$(date +%Y%m%d).tar.gz"
+BACKUP_DIR="${BACKUP_ROOT}/home-$(whoami)-$(date +%Y%m%d)"
+BACKUP_ARCHIVE="${BACKUP_ROOT}/home-$(whoami)-$(date +%Y%m%d).tar.gz"
 LAST_BACKUP="${BACKUP_ROOT}/latest"
 
 EXCLUDE_LIST="${CONFIG_DIR}/exclude-list.txt"
 RSYNC_OPTIONS="${CONFIG_DIR}/rsync-options.txt"
-LOG_FILE="${BACKUP_ROOT}/backup.log"
+LOG_FILE="${BACKUP_ROOT}/backup-home.log"
 
 # Flags
 DRY_RUN=false
@@ -130,8 +129,8 @@ echo "Logging backup details..."
 
 # Retention policy: Clean up backups older than six months
 echo "Cleaning up old backups..."
-find "${BACKUP_ROOT}" -maxdepth 1 -type d -name 'backup-home-config-*' -mtime +180 -exec rm -rf {} \;
-find "${BACKUP_ROOT}" -maxdepth 1 -type f -name 'backup-home-config-*.tar.gz' -mtime +180 -exec rm -f {} \;
+find "${BACKUP_ROOT}" -maxdepth 1 -type d -name 'home-$(whoami)-*' -mtime +180 -exec rm -rf {} \;
+find "${BACKUP_ROOT}" -maxdepth 1 -type f -name 'home-$(whoami)-*.tar.gz' -mtime +180 -exec rm -f {} \;
 
 echo
 echo "Backup completed successfully!"

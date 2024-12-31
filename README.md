@@ -56,7 +56,7 @@ cp config/rsync-options.example config/rsync-options.txt
 To back up your home directory:
 
 ```bash
-./backup.sh
+./backup-home.sh
 ```
 
 ### **4. Run the Restore Script**
@@ -64,7 +64,7 @@ To back up your home directory:
 To restore your home directory from a backup:
 
 ```bash
-./restore.sh
+./restore-home.sh
 ```
 
 ### **5. Run Modular Scripts**
@@ -128,13 +128,13 @@ For package management:
   Preview the backup process without making any changes:
 
   ```bash
-  ./backup.sh -d
+  ./backup-home.sh -d
   ```
 
 - **Skip Compression**:
   Run the backup without compressing configuration files:
   ```bash
-  ./backup.sh -n
+  ./backup-home.sh -n
   ```
 
 ### **Restore Options**
@@ -147,8 +147,8 @@ For package management:
 
 ```
 rsync-home-config-backup/
-├── backup.sh                   # Backup script
-├── restore.sh                  # Restore script
+├── backup-home.sh              # Backup script
+├── restore-home.sh             # Restore script
 ├── backup-dconf.sh             # Backup dconf settings
 ├── restore-dconf.sh            # Restore dconf settings
 ├── backup-dpkg.sh              # Backup Debian packages
