@@ -4,9 +4,7 @@
 # Script: backup.sh
 # Purpose:
 #   Perform an interactive backup of the user's home directory,
-#   focusing on preserving essential configuration files and
-#   installed software lists. Supports incremental backups for
-#   efficiency and space saving.
+#   focusing on preserving essential configuration files.
 #
 # Usage:
 #   ./backup.sh [-d] [-n]
@@ -114,32 +112,10 @@ echo "Starting backup..."
 # Update latest symlink
 ln -sfn "${BACKUP_DIR}" "${BACKUP_ROOT}/latest"
 
-# Verify and back up system configurations
-REQUIRED_COMMANDS=("dpkg" "dconf" "flatpak")
-echo "Creating system configuration files..."
-for cmd in "${REQUIRED_COMMANDS[@]}"; do
-  if ! command -v "$cmd" &>/dev/null; then
-    echo "Error: Required command '$cmd' is missing. Please install it and try again."
-    exit 1
-  fi
-done
-dpkg --get-selections >"${BACKUP_DIR}/packages.list"
-dconf dump / >"${BACKUP_DIR}/dconf-settings.ini"
-flatpak list --app --columns=app >"${BACKUP_DIR}/flatpak.list"
-
-# Validate configuration files
-REQUIRED_FILES=("packages.list" "dconf-settings.ini" "flatpak.list")
-for file in "${REQUIRED_FILES[@]}"; do
-  if [[ ! -f "${BACKUP_DIR}/${file}" ]]; then
-    echo "Warning: Missing ${file} in ${BACKUP_DIR}."
-  fi
-done
-
 # Compress configuration files if enabled
 if $COMPRESS_BACKUP; then
-  echo "Compressing system configuration files..."
-  tar --ignore-failed-read -cvzf "${BACKUP_ARCHIVE}" \
-    -C "${BACKUP_DIR}" packages.list dconf-settings.ini flatpak.list
+  echo "Compressing backup directory..."
+  tar --ignore-failed-read -cvzf "${BACKUP_ARCHIVE}" -C "${BACKUP_ROOT}" "$(basename "${BACKUP_DIR}")"
 fi
 
 # Log the backup details
@@ -162,4 +138,3 @@ echo "Backup completed successfully!"
 echo "Backup location: ${BACKUP_DIR}"
 [ "$COMPRESS_BACKUP" == true ] && echo "Compressed archive: ${BACKUP_ARCHIVE}"
 du -sh "${BACKUP_DIR}" "${BACKUP_ARCHIVE}" 2>/dev/null | awk '{print $2 ": " $1}'
-

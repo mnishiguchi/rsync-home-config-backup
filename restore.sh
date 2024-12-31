@@ -3,8 +3,7 @@
 # ==============================================================#
 # Script: restore.sh
 # Purpose:
-#   Restores the user's home directory and configurations
-#   from a specified backup snapshot.
+#   Restores the user's home directory from a specified backup snapshot.
 #
 # Usage:
 #   ./restore.sh
@@ -15,7 +14,6 @@
 #
 # Features:
 #   - Interactive confirmation prompts.
-#   - Supports restoring dconf settings, package lists, and home directory.
 #   - Allows selecting a specific backup snapshot to restore.
 # ==============================================================#
 
@@ -60,44 +58,6 @@ read -rp "Do you want to proceed? (y/n): " CONFIRM
 if [[ "$CONFIRM" != "y" ]]; then
   echo "Restore canceled." | tee -a "$LOG_FILE"
   exit 0
-fi
-
-# Restore dconf settings
-if [[ -f "${BACKUP_DIR}/dconf-settings.ini" ]]; then
-  echo "Restoring dconf settings..." | tee -a "$LOG_FILE"
-  dconf load / <"${BACKUP_DIR}/dconf-settings.ini" || {
-    echo "Failed to restore dconf settings." | tee -a "$LOG_FILE"
-  }
-  echo "dconf settings restored." | tee -a "$LOG_FILE"
-else
-  echo "No dconf settings found in the backup." | tee -a "$LOG_FILE"
-fi
-
-# Restore Debian packages
-if [[ -f "${BACKUP_DIR}/packages.list" ]]; then
-  echo "Restoring Debian packages..." | tee -a "$LOG_FILE"
-  sudo dpkg --set-selections <"${BACKUP_DIR}/packages.list" || {
-    echo "Failed to restore Debian package selections." | tee -a "$LOG_FILE"
-  }
-  sudo apt-get dselect-upgrade -y || {
-    echo "Failed to install Debian packages." | tee -a "$LOG_FILE"
-  }
-  echo "Debian packages restored." | tee -a "$LOG_FILE"
-else
-  echo "No Debian package list found in the backup." | tee -a "$LOG_FILE"
-fi
-
-# Restore Flatpak packages
-if [[ -f "${BACKUP_DIR}/flatpak.list" ]]; then
-  echo "Restoring Flatpak packages..." | tee -a "$LOG_FILE"
-  while IFS= read -r package; do
-    flatpak install -y flathub "$package" || {
-      echo "Failed to install Flatpak package: $package" | tee -a "$LOG_FILE"
-    }
-  done <"${BACKUP_DIR}/flatpak.list"
-  echo "Flatpak packages restored." | tee -a "$LOG_FILE"
-else
-  echo "No Flatpak package list found in the backup." | tee -a "$LOG_FILE"
 fi
 
 # Restore home directory
