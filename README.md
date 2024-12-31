@@ -2,7 +2,7 @@
 
 ## **Overview**
 
-This project provides scripts to backup and restore your home directory and essential configurations on Linux. It supports incremental backups, selective inclusion and exclusion, and easy restoration of system settings and packages.
+This project provides scripts to backup and restore your home directory and essential configurations on Linux. It supports incremental backups, selective inclusion and exclusion, and easy restoration of specific configurations such as `dconf` settings or installed packages.
 
 ### **Features**
 
@@ -15,10 +15,13 @@ This project provides scripts to backup and restore your home directory and esse
   - Logging of backup operations.
 
 - **Restore**:
+
   - Selective restoration of backups.
   - Interactive prompts for user confirmation.
-  - Restores dconf settings, Debian packages, and Flatpak packages.
   - Logs restore operations for troubleshooting.
+
+- **Modular Scripts**:
+  - Dedicated scripts for backing up and restoring `dconf` settings and installed packages (Debian and Flatpak).
 
 ---
 
@@ -45,7 +48,6 @@ cp config/rsync-options.example config/rsync-options.txt
 #### **Configuration Files**
 
 - `backup-location.txt`: Specify the directory where backups will be stored (e.g., external drive or network share).
-- `include-list.txt`: List files and directories to include in the backup.
 - `exclude-list.txt`: List files and directories to exclude from the backup.
 - `rsync-options.txt`: Additional `rsync` options (optional).
 
@@ -59,11 +61,47 @@ To back up your home directory:
 
 ### **4. Run the Restore Script**
 
-To restore from a backup:
+To restore your home directory from a backup:
 
 ```bash
 ./restore.sh
 ```
+
+### **5. Run Modular Scripts**
+
+For `dconf` settings:
+
+- Backup:
+  ```bash
+  ./backup-dconf.sh
+  ```
+- Restore:
+  ```bash
+  ./restore-dconf.sh
+  ```
+
+For package management:
+
+- Debian Packages:
+
+  - Backup:
+    ```bash
+    ./backup-dpkg.sh
+    ```
+  - Restore:
+    ```bash
+    ./restore-dpkg.sh
+    ```
+
+- Flatpak Applications:
+  - Backup:
+    ```bash
+    ./backup-flatpak.sh
+    ```
+  - Restore:
+    ```bash
+    ./restore-flatpak.sh
+    ```
 
 ---
 
@@ -78,8 +116,7 @@ To restore from a backup:
 ### **Restore**
 
 1. Lists available backups and prompts the user to select one.
-2. Restores dconf settings, Debian packages, and Flatpak packages if they exist.
-3. Uses `rsync` to restore the home directory interactively.
+2. Uses `rsync` to restore the home directory interactively.
 
 ---
 
@@ -112,9 +149,14 @@ To restore from a backup:
 rsync-home-config-backup/
 ├── backup.sh                   # Backup script
 ├── restore.sh                  # Restore script
+├── backup-dconf.sh             # Backup dconf settings
+├── restore-dconf.sh            # Restore dconf settings
+├── backup-dpkg.sh              # Backup Debian packages
+├── restore-dpkg.sh             # Restore Debian packages
+├── backup-flatpak.sh           # Backup Flatpak applications
+├── restore-flatpak.sh          # Restore Flatpak applications
 ├── config/                     # Configuration directory
 │   ├── backup-location.example  # Example backup location
-│   ├── include-list.example     # Example include list
 │   ├── exclude-list.example     # Example exclude list
 │   ├── rsync-options.example    # Example rsync options
 ```
