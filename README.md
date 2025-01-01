@@ -192,20 +192,21 @@ Reinstall saved Flatpak applications:
 
 ## Folder Structure
 
-```plaintext
+```sh
 home-backup-scripts/
-├── backup-home.sh              # Backup script for home directory
-├── restore-home.sh             # Restore script for home directory
-├── backup-dconf.sh             # Backup dconf settings
-├── restore-dconf.sh            # Restore dconf settings
-├── backup-dpkg.sh              # Backup installed Debian packages
-├── restore-dpkg.sh             # Restore Debian packages
-├── backup-flatpak.sh           # Backup Flatpak applications
-├── restore-flatpak.sh          # Restore Flatpak applications
+├── backup-home.sh              # Script to back up the home directory
+├── view-home-backup.sh         # Script to view the contents of a home directory backup
+├── restore-home.sh             # Script to restore the home directory from a backup
+├── backup-dconf.sh             # Script to back up GNOME/dconf settings
+├── restore-dconf.sh            # Script to restore GNOME/dconf settings
+├── backup-dpkg.sh              # Script to back up installed Debian packages
+├── restore-dpkg.sh             # Script to restore installed Debian packages
+├── backup-flatpak.sh           # Script to back up Flatpak applications
+├── restore-flatpak.sh          # Script to restore Flatpak applications
 ├── config/                     # Configuration directory
-│   ├── backup-location.example  # Example backup location
-│   ├── exclude-list.example     # Example exclude list
-│   ├── rsync-options.example    # Example rsync options
+│   ├── backup-location.txt     # Defines the location for storing backups
+│   ├── exclude-list.txt        # List of files/directories to exclude from backups
+│   ├── rsync-options.txt       # Customizable rsync options
 ```
 
 ---
