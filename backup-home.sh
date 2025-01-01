@@ -79,7 +79,7 @@ done
 # Rsync options
 RSYNC_CMD=(
   rsync -avhPAX --delete --delete-excluded --backup --suffix="$(date +%Y%m%d)"
-  --log-file="${BACKUP_ROOT}/rsync.log" --inplace --verbose
+  --log-file="${BACKUP_ROOT}/rsync.log" --verbose
 )
 
 # Include incremental backup with --link-dest

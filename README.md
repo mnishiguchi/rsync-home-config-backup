@@ -62,9 +62,10 @@ These scripts provide an easy and efficient way to back up and restore your home
      ```
    - **`config/rsync-options.txt`**: Add additional `rsync` options for customization, such as limiting file sizes or preserving hard links. Example:
      ```
-     --no-compress
      --hard-links
+     --no-compress
      --max-size=100M
+     --progress
      ```
 
 3. **Verify the Configuration**:

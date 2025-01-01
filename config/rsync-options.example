@@ -1,8 +1,4 @@
 --hard-links
 --no-compress
 --max-size=100M
---perms
---times
---owner
---group
---links
+--progress
