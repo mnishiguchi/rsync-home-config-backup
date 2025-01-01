@@ -12,12 +12,6 @@
 #   -d  Dry run: Preview the backup without making changes.
 #   -n  No compression: Skip tarball compression.
 #
-# Requirements:
-#   - Rsync must be installed.
-#   - Config files must exist in the `config/` directory:
-#     - `backup-location.txt` : Backup destination directory.
-#     - `exclude-list.txt`    : List of files/directories to exclude.
-#     - `rsync-options.txt`   : Additional rsync options (optional).
 # ==============================================================#
 
 set -e # Exit on errors
@@ -29,7 +23,6 @@ BACKUP_ROOT=$(<"${CONFIG_DIR}/backup-location.txt") # Root backup directory
 BACKUP_DIR="${BACKUP_ROOT}/home-$(whoami)-$(date +%Y%m%d)"
 BACKUP_ARCHIVE="${BACKUP_ROOT}/home-$(whoami)-$(date +%Y%m%d).tar.gz"
 LAST_BACKUP="${BACKUP_ROOT}/latest"
-
 EXCLUDE_LIST="${CONFIG_DIR}/exclude-list.txt"
 RSYNC_OPTIONS="${CONFIG_DIR}/rsync-options.txt"
 LOG_FILE="${BACKUP_ROOT}/backup-home.log"
@@ -41,9 +34,12 @@ COMPRESS_BACKUP=true
 # Parse options
 while getopts "dn" opt; do
   case $opt in
-    d) DRY_RUN=true ;;
-    n) COMPRESS_BACKUP=false ;;
-    *) echo "Invalid option: -$OPTARG"; exit 1 ;;
+  d) DRY_RUN=true ;;
+  n) COMPRESS_BACKUP=false ;;
+  *)
+    echo "Invalid option: -$OPTARG"
+    exit 1
+    ;;
   esac
 done
 
@@ -60,6 +56,7 @@ echo "Latest Backup (for incremental): ${LAST_BACKUP}"
 [ "$DRY_RUN" == true ] && echo "Dry Run: Enabled"
 [ "$COMPRESS_BACKUP" == false ] && echo "Compression: Skipped"
 echo
+
 read -rp "Do you want to proceed? (y/n): " CONFIRM
 if [[ "$CONFIRM" != "y" ]]; then
   echo "Backup canceled."
@@ -69,7 +66,7 @@ fi
 # Rsync options
 RSYNC_CMD=(
   rsync -avhPAX --delete --delete-excluded --backup --suffix="$(date +%Y%m%d)"
-  --log-file="${BACKUP_ROOT}/rsync.log" --inplace
+  --log-file="${BACKUP_ROOT}/rsync.log" --inplace --verbose
 )
 
 # Include incremental backup with --link-dest
@@ -91,6 +88,9 @@ if [[ -f "${EXCLUDE_LIST}" ]]; then
   echo "Using exclude list: ${EXCLUDE_LIST}"
 fi
 
+# Add dry-run mode if enabled
+[ "$DRY_RUN" == true ] && RSYNC_CMD+=(--dry-run)
+
 # Final confirmation before starting backup
 echo
 echo "Ready to start backup to: ${BACKUP_DIR}"
@@ -101,7 +101,6 @@ if [[ "$FINAL_CONFIRM" != "y" ]]; then
 fi
 
 # Perform the backup
-[ "$DRY_RUN" == true ] && RSYNC_CMD+=(--dry-run)
 echo "Starting backup..."
 "${RSYNC_CMD[@]}" "${HOME}/" "${BACKUP_DIR}/" || {
   echo "Error: Rsync backup failed."
@@ -111,13 +110,13 @@ echo "Starting backup..."
 # Update latest symlink
 ln -sfn "${BACKUP_DIR}" "${BACKUP_ROOT}/latest"
 
-# Compress configuration files if enabled
+# Compress backup if enabled
 if $COMPRESS_BACKUP; then
   echo "Compressing backup directory..."
   tar --ignore-failed-read -cvzf "${BACKUP_ARCHIVE}" -C "${BACKUP_ROOT}" "$(basename "${BACKUP_DIR}")"
 fi
 
-# Log the backup details
+# Log backup details
 echo "Logging backup details..."
 {
   echo "Backup Date: $(date)"
@@ -125,12 +124,12 @@ echo "Logging backup details..."
   [ "$COMPRESS_BACKUP" == true ] && echo "Compressed Archive: ${BACKUP_ARCHIVE}"
   du -sh "${BACKUP_DIR}" "${BACKUP_ARCHIVE}" 2>/dev/null | awk '{print $2 ": " $1}'
   echo "--------------------------------------------"
-} >> "${LOG_FILE}"
+} >>"${LOG_FILE}"
 
 # Retention policy: Clean up backups older than six months
 echo "Cleaning up old backups..."
-find "${BACKUP_ROOT}" -maxdepth 1 -type d -name 'home-$(whoami)-*' -mtime +180 -exec rm -rf {} \;
-find "${BACKUP_ROOT}" -maxdepth 1 -type f -name 'home-$(whoami)-*.tar.gz' -mtime +180 -exec rm -f {} \;
+find "${BACKUP_ROOT}" -maxdepth 1 -type d -name "home-$(whoami)-*" -mtime +180 -exec rm -rf {} \;
+find "${BACKUP_ROOT}" -maxdepth 1 -type f -name "home-$(whoami)-*.tar.gz" -mtime +180 -exec rm -f {} \;
 
 echo
 echo "Backup completed successfully!"
