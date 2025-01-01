@@ -1,59 +1,44 @@
 #!/bin/bash
+# Restore dconf settings
 
-# ==============================================================#
-# Script: restore-dconf.sh
-# Purpose:
-#   Restore dconf settings from a specified backup snapshot.
-#
-# Usage:
-#   ./restore-dconf.sh
-#
-# Requirements:
-#   - `dconf` must be installed for loading configuration settings.
-#   - `config/backup-location.txt` must specify the backup root directory.
-#
-# Features:
-#   - Interactive confirmation prompts.
-#   - Allows selecting a specific backup snapshot to restore.
-# ==============================================================#
-
-set -e  # Exit on errors
+set -e
 
 # Constants
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 CONFIG_DIR="${SCRIPT_DIR}/config"
 BACKUP_ROOT=$(<"${CONFIG_DIR}/backup-location.txt")
-LOG_FILE="${BACKUP_ROOT}/restore-dconf.log"
+BACKUP_DIR="${BACKUP_ROOT}/dconf-backups"
+LOG_FILE="${BACKUP_DIR}/restore-dconf.log"
 
-# Ensure backup root directory exists
-if [[ ! -d "${BACKUP_ROOT}" ]]; then
-  echo "Backup root directory not found: ${BACKUP_ROOT}" | tee -a "$LOG_FILE"
+# Ensure backup directory exists
+if [[ ! -d "$BACKUP_DIR" ]]; then
+  echo "Error: Backup directory not found: $BACKUP_DIR" | tee -a "$LOG_FILE"
   exit 1
 fi
 
-# List available backups
-echo "Available Backups:"
-echo "------------------"
-BACKUPS=$(ls -1 "${BACKUP_ROOT}" | grep -E '^dconf-backups-[0-9]{8}$' || true)
-if [[ -z "$BACKUPS" ]]; then
-  echo "No dconf backups found." | tee -a "$LOG_FILE"
+# List available backup files
+echo "Available Dconf Backup Files:"
+echo "-----------------------------"
+BACKUP_FILES=$(ls -1 "${BACKUP_DIR}/dconf-*.ini" 2>/dev/null || true)
+if [[ -z "$BACKUP_FILES" ]]; then
+  echo "No dconf backup files found in $BACKUP_DIR." | tee -a "$LOG_FILE"
   exit 1
 fi
+echo "$BACKUP_FILES"
 
-echo "$BACKUPS"
-
-# Prompt user to select a backup
+# Prompt user to select a backup file
 echo
-read -rp "Enter the backup folder name (e.g., dconf-backups-20241228): " SELECTED_BACKUP
-BACKUP_DIR="${BACKUP_ROOT}/${SELECTED_BACKUP}"
+read -rp "Enter the backup file name (e.g., dconf-username-20250101.ini): " SELECTED_FILE
+SELECTED_PATH="${BACKUP_DIR}/${SELECTED_FILE}"
 
-if [[ ! -d "${BACKUP_DIR}" ]]; then
-  echo "Backup not found: ${BACKUP_DIR}" | tee -a "$LOG_FILE"
+# Validate selected file
+if [[ ! -f "$SELECTED_PATH" ]]; then
+  echo "Error: Backup file not found: $SELECTED_PATH" | tee -a "$LOG_FILE"
   exit 1
 fi
 
 # Confirmation prompt
-echo "You are about to restore from: ${BACKUP_DIR}"
+echo "You are about to restore dconf settings from: $SELECTED_PATH"
 read -rp "Do you want to proceed? (y/n): " CONFIRM
 if [[ "$CONFIRM" != "y" ]]; then
   echo "Restore canceled." | tee -a "$LOG_FILE"
@@ -61,16 +46,11 @@ if [[ "$CONFIRM" != "y" ]]; then
 fi
 
 # Restore dconf settings
-if [[ -f "${BACKUP_DIR}/dconf-settings.ini" ]]; then
-  echo "Restoring dconf settings..." | tee -a "$LOG_FILE"
-  dconf load / <"${BACKUP_DIR}/dconf-settings.ini" || {
-    echo "Failed to restore dconf settings." | tee -a "$LOG_FILE"
-    exit 1
-  }
-  echo "Dconf settings restored successfully." | tee -a "$LOG_FILE"
+if command -v dconf >/dev/null 2>&1; then
+  echo "Restoring dconf settings from $SELECTED_PATH..." | tee -a "$LOG_FILE"
+  dconf load / <"$SELECTED_PATH"
+  echo "Dconf settings restored successfully from $SELECTED_PATH." | tee -a "$LOG_FILE"
 else
-  echo "No dconf settings file found in the backup." | tee -a "$LOG_FILE"
+  echo "Error: 'dconf' command not found. Cannot restore settings." | tee -a "$LOG_FILE"
   exit 1
 fi
-
-echo "Restore completed successfully from: ${BACKUP_DIR}" | tee -a "$LOG_FILE"
