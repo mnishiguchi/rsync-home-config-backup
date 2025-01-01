@@ -1,30 +1,55 @@
 #!/bin/bash
+# Restore installed Flatpak applications
+
 set -e
 
+# Constants
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 CONFIG_DIR="${SCRIPT_DIR}/config"
 BACKUP_ROOT=$(<"${CONFIG_DIR}/backup-location.txt")
-LOG_FILE="${BACKUP_ROOT}/restore-flatpak.log"
+BACKUP_DIR="${BACKUP_ROOT}/flatpak-backups"
+LOG_FILE="${BACKUP_DIR}/restore-flatpak.log"
 
-mkdir -p "$(dirname "$LOG_FILE")"
-exec > >(tee -a "$LOG_FILE") 2>&1
-
-echo "Available Flatpak Backups:"
-ls -1 "${BACKUP_ROOT}" | grep -E '^flatpak-backups-[0-9]{8}$' || {
-  echo "No backups found."
-  exit 1
-}
-
-read -rp "Enter the backup folder name: " SELECTED_BACKUP
-BACKUP_DIR="${BACKUP_ROOT}/${SELECTED_BACKUP}"
-
-if [[ ! -f "${BACKUP_DIR}/flatpak.list" ]]; then
-  echo "Flatpak package list not found in ${BACKUP_DIR}."
+# Ensure backup directory exists
+if [[ ! -d "$BACKUP_DIR" ]]; then
+  echo "Error: Backup directory not found: $BACKUP_DIR" | tee -a "$LOG_FILE"
   exit 1
 fi
 
-echo "Restoring Flatpak packages..."
+# List available backup files
+echo "Available Flatpak Backup Files:"
+echo "-------------------------------"
+BACKUP_FILES=$(ls -1 "${BACKUP_DIR}/flatpak-*.list" 2>/dev/null || true)
+if [[ -z "$BACKUP_FILES" ]]; then
+  echo "No Flatpak backup files found in $BACKUP_DIR." | tee -a "$LOG_FILE"
+  exit 1
+fi
+echo "$BACKUP_FILES"
+
+# Prompt user to select a backup file
+echo
+read -rp "Enter the backup file name (e.g., flatpak-username-20250101.list): " SELECTED_FILE
+SELECTED_PATH="${BACKUP_DIR}/${SELECTED_FILE}"
+
+# Validate selected file
+if [[ ! -f "$SELECTED_PATH" ]]; then
+  echo "Error: Backup file not found: $SELECTED_PATH" | tee -a "$LOG_FILE"
+  exit 1
+fi
+
+# Confirmation prompt
+echo "You are about to restore Flatpak applications from: $SELECTED_PATH"
+read -rp "Do you want to proceed? (y/n): " CONFIRM
+if [[ "$CONFIRM" != "y" ]]; then
+  echo "Restore canceled." | tee -a "$LOG_FILE"
+  exit 0
+fi
+
+# Restore Flatpak applications
+echo "Restoring Flatpak applications from $SELECTED_PATH..." | tee -a "$LOG_FILE"
 while IFS= read -r package; do
-  flatpak install -y flathub "$package"
-done <"${BACKUP_DIR}/flatpak.list"
-echo "Flatpak packages restored successfully."
+  flatpak install -y flathub "$package" || {
+    echo "Failed to install Flatpak package: $package" | tee -a "$LOG_FILE"
+  }
+done <"$SELECTED_PATH"
+echo "Flatpak applications restored successfully from $SELECTED_PATH." | tee -a "$LOG_FILE"
