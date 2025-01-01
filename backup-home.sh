@@ -134,9 +134,26 @@ echo "Logging backup details..."
 } >>"${LOG_FILE}"
 
 # Retention policy: Clean up backups older than six months
+# Retention policy: Clean up backups older than six months
 echo "Cleaning up old backups..."
-find "${BACKUP_ROOT}" -type d -name "home-$(whoami)-*" -mtime +180 -exec rm -rf {} \;
-find "${BACKUP_ROOT}" -type f -name "*.tar.gz.gpg" -mtime +180 -exec rm -f {} \;
+
+# Clean up old directories
+OLD_DIRECTORIES=$(find "${BACKUP_ROOT}" -type d -name "home-$(whoami)-*" -mtime +180)
+if [[ -z "$OLD_DIRECTORIES" ]]; then
+  echo "No old directories to clean up."
+else
+  echo "$OLD_DIRECTORIES" | xargs -r rm -rf
+  echo "Old directories cleaned up."
+fi
+
+# Clean up old encrypted tarballs
+OLD_TARBALLS=$(find "${BACKUP_ROOT}" -type f -name "*.tar.gz.gpg" -mtime +180)
+if [[ -z "$OLD_TARBALLS" ]]; then
+  echo "No old tarballs to clean up."
+else
+  echo "$OLD_TARBALLS" | xargs -r rm -f
+  echo "Old tarballs cleaned up."
+fi
 
 echo
 echo "Backup completed successfully!"
