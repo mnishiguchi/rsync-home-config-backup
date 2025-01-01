@@ -3,7 +3,7 @@
 # ==============================================================#
 # Script: backup-home.sh
 # Purpose:
-#   Simplified home directory backup using rsync.
+#   Simplified home directory backup using rsync with encryption.
 #
 # Usage:
 #   ./backup-home.sh [-d] [-n]
@@ -11,7 +11,6 @@
 # Options:
 #   -d  Dry run: Preview the backup without making changes.
 #   -n  No compression: Skip tarball compression.
-#
 # ==============================================================#
 
 set -e # Exit on errors
@@ -21,7 +20,8 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 CONFIG_DIR="${SCRIPT_DIR}/config"
 BACKUP_ROOT=$(<"${CONFIG_DIR}/backup-location.txt") # Root backup directory
 BACKUP_DIR="${BACKUP_ROOT}/home-$(whoami)-$(date +%Y%m%d)"
-BACKUP_ARCHIVE="${BACKUP_ROOT}/home-$(whoami)-$(date +%Y%m%d).tar.gz"
+TARBALL="${BACKUP_ROOT}/home-$(whoami)-$(date +%Y%m%d).tar.gz"
+ENCRYPTED_TARBALL="${TARBALL}.gpg"
 LAST_BACKUP="${BACKUP_ROOT}/latest"
 EXCLUDE_LIST="${CONFIG_DIR}/exclude-list.txt"
 RSYNC_OPTIONS="${CONFIG_DIR}/rsync-options.txt"
@@ -110,10 +110,17 @@ echo "Starting backup..."
 # Update latest symlink
 ln -sfn "${BACKUP_DIR}" "${BACKUP_ROOT}/latest"
 
-# Compress backup if enabled
+# Compress and encrypt the backup directory
 if $COMPRESS_BACKUP; then
-  echo "Compressing backup directory..."
-  tar --ignore-failed-read -cvzf "${BACKUP_ARCHIVE}" -C "${BACKUP_ROOT}" "$(basename "${BACKUP_DIR}")"
+  echo "Compressing backup files..."
+  tar -cvzf "${TARBALL}" -C "${BACKUP_ROOT}" "$(basename "${BACKUP_DIR}")"
+
+  echo "Encrypting the backup tarball..."
+  gpg --symmetric --cipher-algo AES256 --output "${ENCRYPTED_TARBALL}" "${TARBALL}"
+
+  # Remove the unencrypted tarball
+  rm -f "${TARBALL}"
+  echo "Backup encrypted and saved at: ${ENCRYPTED_TARBALL}"
 fi
 
 # Log backup details
@@ -121,18 +128,18 @@ echo "Logging backup details..."
 {
   echo "Backup Date: $(date)"
   echo "Backup Directory: ${BACKUP_DIR}"
-  [ "$COMPRESS_BACKUP" == true ] && echo "Compressed Archive: ${BACKUP_ARCHIVE}"
-  du -sh "${BACKUP_DIR}" "${BACKUP_ARCHIVE}" 2>/dev/null | awk '{print $2 ": " $1}'
+  [ "$COMPRESS_BACKUP" == true ] && echo "Encrypted Archive: ${ENCRYPTED_TARBALL}"
+  du -sh "${BACKUP_DIR}" "${ENCRYPTED_TARBALL}" 2>/dev/null | awk '{print $2 ": " $1}'
   echo "--------------------------------------------"
 } >>"${LOG_FILE}"
 
 # Retention policy: Clean up backups older than six months
 echo "Cleaning up old backups..."
-find "${BACKUP_ROOT}" -maxdepth 1 -type d -name "home-$(whoami)-*" -mtime +180 -exec rm -rf {} \;
-find "${BACKUP_ROOT}" -maxdepth 1 -type f -name "home-$(whoami)-*.tar.gz" -mtime +180 -exec rm -f {} \;
+find "${BACKUP_ROOT}" -type d -name "home-$(whoami)-*" -mtime +180 -exec rm -rf {} \;
+find "${BACKUP_ROOT}" -type f -name "*.tar.gz.gpg" -mtime +180 -exec rm -f {} \;
 
 echo
 echo "Backup completed successfully!"
 echo "Backup location: ${BACKUP_DIR}"
-[ "$COMPRESS_BACKUP" == true ] && echo "Compressed archive: ${BACKUP_ARCHIVE}"
-du -sh "${BACKUP_DIR}" "${BACKUP_ARCHIVE}" 2>/dev/null | awk '{print $2 ": " $1}'
+[ "$COMPRESS_BACKUP" == true ] && echo "Encrypted archive: ${ENCRYPTED_TARBALL}"
+du -sh "${BACKUP_DIR}" "${ENCRYPTED_TARBALL}" 2>/dev/null | awk '{print $2 ": " $1}'
