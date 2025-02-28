@@ -1,75 +1,107 @@
 # ============================
-# Example Exclude List
+# Example Rsync Exclude List
 # ============================
+# This file defines files and directories to be **excluded** from backups.
+# Modify as needed to suit your backup requirements.
 
-# General Exclusions
-# ------------------
+# --------------------------------------------
+# 🔹 1. Cache, Logs, and Temporary Files
+# --------------------------------------------
+**/cache/**             # Any "cache" directory at any depth
+**/tmp/**               # Any "tmp" directory at any depth
+**/logs/**              # Any "logs" directory at any depth
+**/Trash/**             # Trash directories
 
-# Cache Directories
-*/cache*/
-*/Cache*/
+*.tmp                   # Temporary files
+*.log                   # Log files
+*.bak                   # Backup copies
+.swp                    # Vim swap files
+.viminfo                # Vim history files
+.local/state/**         # System state cache
+.local/share/Trash/**   # User trash directory
 
-# Temporary Files
-*.tmp
-*.log
-*.bak
-
-# Large User Directories
+# --------------------------------------------
+# 🔹 2. Large User Directories
+# --------------------------------------------
 Downloads/
+Downloads/**
 Music/
+Music/**
 Pictures/
+Pictures/**
 Videos/
+Videos/**
 VirtualBox VMs/
+VirtualBox VMs/**
 
-# Development and Build Files
-# ---------------------------
+# --------------------------------------------
+# 🔹 3. Development & Build Files
+# --------------------------------------------
+**/node_modules/**   # Node.js dependencies
+**/build/**          # Build artifacts
+**/_build/**         # Elixir builds
+**/o/**              # Compiler output
+**/deps/**           # Dependency folders
+go/
+go/**                # Go workspace
 
-# Development Build Directories
-*/node_modules/
-*/build/
-*/_build/
-*/o/
+# --------------------------------------------
+# 🔹 4. Ephemeral Configuration Files
+# --------------------------------------------
+.asdf/
+.asdf/**
+.bundle/
+.bundle/**
+.cargo/
+.cargo/**
+.dart-tool/
+.dart-tool/**
+.dartServer/
+.dartServer/**
+.gradle/
+.gradle/**
+.npm/
+.npm/**
+.rustup/
+.rustup/**
+.vscode/
+.vscode/**
+.zoom/
+.zoom/**
 
-# Git-Related Files
-*/.git/
-*/.git-lfs/
-*/.gitmodules
+# --------------------------------------------
+# 🔹 5. Web Browsers and Application Caches
+# --------------------------------------------
+.config/google-chrome/**   # Chrome browser cache
+.config/chromium/**        # Chromium browser cache
+.mozilla/**                # Firefox browser data
 
-# Platform and Application Specific Files
-# ---------------------------------------
-
-# Desktop Environment Files
-.dmrc
-.gtkrc-2.0
-.gtkrc-xfce
-.ICEauthority
-.Xauthority
-.xinputrc
-.xsession-errors
-.xsession-errors.old
-
-# Platform-Specific Artifacts
-.DS_Store
-Thumbs.db
-
-# ~/.local/share Exclusions
-.local/share/Trash/
-.local/share/Steam/
-.local/share/Recent/
-
-# Sensitive Files
-# ---------------
-
-# History and Credentials
+# --------------------------------------------
+# 🔹 6. Sensitive Authentication & Credentials
+# --------------------------------------------
+.1password/
+.1password/**
 .*_history
 .rdbg_history
 .git-credentials
-
-# Application Data
-.1password/
-.sudo_as_admin_successful
+.netrc
+.ssh/
+.ssh/**
 .wget-hsts
 
-# Notes
-# -----
-# Modify this file to suit your specific backup needs. Test the configuration before relying on it for critical data.
+# --------------------------------------------
+# 🔹 7. System and Platform-Specific Files
+# --------------------------------------------
+.DS_Store
+Thumbs.db
+.local/bin/**     # Large user binaries
+.local/share/nvim/**  # Neovim cache
+
+# --------------------------------------------
+# 🔹 8. Notes
+# --------------------------------------------
+# - This is a **generic** exclude list. Modify it as needed.
+# - **Test exclusions** before running a backup:
+#     rsync -avhPAX --dry-run --exclude-from=config/exclude-list.txt ~ /tmp/test-backup
+# - Ensure critical personal files **are NOT excluded** by mistake.
+
